@@ -9,6 +9,7 @@ export class AuthController {
   @Post()
   async login(@Body() body: LoginDto) {
     const { email, password } = body;
+    console.log('Alguém fez login');
 
     return this.authService.signIn(email, password);
   }
