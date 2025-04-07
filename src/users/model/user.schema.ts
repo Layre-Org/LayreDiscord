@@ -14,11 +14,17 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({ default: 'defaultAvatar' })
+  @Prop({
+    default:
+      'https://static-00.iconduck.com/assets.00/avatar-icon-2048x2048-ilrgk6vk.png',
+  })
   avatar: string;
 
   @Prop({ default: Date.now() })
   createdAt: Date;
+
+  @Prop({ default: '#ffffff' })
+  nicknameColor: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

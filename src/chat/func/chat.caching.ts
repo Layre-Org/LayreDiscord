@@ -15,6 +15,7 @@ function push(data: {
   content: string;
   author: string | Types.ObjectId;
   id: UUID;
+  sentAt: Date | number;
 }) {
   MessagesCacheArray.push(data);
 }

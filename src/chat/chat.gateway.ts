@@ -32,9 +32,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   wsClients: Socket[] = [];
 
   handleConnection(client: Socket) {
-    console.log(`Cliente se conectou`);
     this.wsClients.push(client);
-    //this.broadcast({ event: 'connected', data: 'A Client has connected' });
   }
 
   handleDisconnect(client) {
@@ -149,10 +147,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data: '',
       };
     }
+
     const userPreferedData = {
       _id: user['_id'],
       username: user['username'],
       avatar: user['avatar'],
+      nicknameColor: user['nicknameColor'],
     };
 
     this.broadcast({ event: 'connected', data: userPreferedData });
@@ -179,34 +179,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
     }
 
-    /*const token = data['userToken'];
-    const user = await this.getUser(token);
-    if (!user) {
-      return {
-        event: 'Unauthorized',
-        data: '',
-      };
-    }
-    const userPreferedData = {
-      _id: user['_id'],
-      username: user['username'],
-      avatar: user['avatar'],
-    };*/
+    const sentAt = Date.now();
+    const id = randomUUID();
 
     this.broadcast({
       event: 'MessageSent',
       data: {
         user: userData,
         message: data.message,
+        sentAt: sentAt,
+        id: id,
       },
     });
 
     MessageCache.push({
       content: data.message,
       author: userData['_id'],
-      id: randomUUID(),
+      id: id,
+      sentAt: sentAt,
     });
-    console.log(MessageCache.get());
 
     if (MessageCache.length() >= Number(process.env.MESSAGE_DOC_SIZE)) {
       await this.chatService.saveMessages(MessageCache.get());
@@ -216,7 +207,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('test')
   handleTest(@MessageBody() data: string) {
-    console.log('Request feito.');
     return { event: 'test', data: data };
   }
 }

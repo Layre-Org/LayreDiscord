@@ -1,4 +1,11 @@
-import { IsEmail, IsOptional, IsString, IsUrl, Length } from 'class-validator';
+import {
+  IsEmail,
+  IsHexColor,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Length,
+} from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -17,4 +24,9 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   avatar: string;
+
+  @IsString()
+  @IsHexColor()
+  @IsOptional()
+  nicknameColor: string;
 }
