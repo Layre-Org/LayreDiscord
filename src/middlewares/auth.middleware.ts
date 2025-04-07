@@ -13,7 +13,7 @@ import { verify } from 'jsonwebtoken';
 export class AuthMiddleware implements NestMiddleware {
   constructor(private readonly userService: UserService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const { authorization } = req.headers;
 
     if (!authorization) {
@@ -33,7 +33,7 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     let error = false;
-    verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+    await verify(token, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         error = true;
         return;
@@ -41,7 +41,6 @@ export class AuthMiddleware implements NestMiddleware {
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const user = await this.userService.findById(decoded['id']);
-
       if (!user || !user._id) {
         error = true;
         return;

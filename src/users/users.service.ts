@@ -8,7 +8,9 @@ import {
 import { User } from './model/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { CreateUserDto } from './dtos/createUser.dto';
+import { CreateUserDto } from './dtos/create-user.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
+import { hash } from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -20,6 +22,10 @@ export class UserService {
 
   findAuth(email: string) {
     return this.userModel.findOne({ email }).select('+password');
+  }
+
+  findByEmail(email: string) {
+    return this.userModel.findOne({ email });
   }
 
   async create(body: CreateUserDto) {
@@ -44,5 +50,18 @@ export class UserService {
           break;
       }
     }
+  }
+
+  async update(id: Types.ObjectId | string, body: UpdateUserDto) {
+    if (body['password']) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      body['password'] = await hash(body['password'], 10);
+    }
+
+    return await this.userModel.findOneAndUpdate({ _id: id }, body);
+  }
+
+  delete(id: Types.ObjectId | string) {
+    return this.userModel.findOneAndDelete({ _id: id });
   }
 }
