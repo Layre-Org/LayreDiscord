@@ -235,8 +235,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('DeleteMessage')
-  handleDelete(@MessageBody() data: DeleteMessageDataDto) {
-    return data;
+  async handleDelete(
+    @MessageBody() data: DeleteMessageDataDto,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    if (!data['id']) return;
+
+    let userData = {};
+    // eslint-disable-next-line prefer-const
+    for (let c of this.wsClients) {
+      if (c == socket) {
+        userData = c['user'];
+      }
+    }
+    if (!userData) return;
+    if (!userData['_id']) return;
+
+    const response = await this.chatService.deleteMessage(
+      data.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      userData['_id'],
+    );
+    return typeof response == 'boolean' ? response : response.modifiedCount > 0;
   }
 
   @SubscribeMessage('test')

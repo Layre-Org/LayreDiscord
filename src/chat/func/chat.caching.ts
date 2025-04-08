@@ -51,4 +51,17 @@ function update(id: UUID, newMessage: string, userId: Types.ObjectId | string) {
   return updated;
 }
 
-export { get, push, length, clean, update };
+function del(id: UUID, userId: string | Types.ObjectId) {
+  let count = 0;
+  let deleted = false;
+  get().forEach((messageElement) => {
+    if (messageElement.id == id && messageElement.author == userId) {
+      MessagesCacheArray.splice(count, 1);
+      deleted = true;
+    }
+    count += 1;
+  });
+  return deleted;
+}
+
+export { get, push, length, clean, update, del };

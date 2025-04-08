@@ -4,11 +4,13 @@ import { Model, Types } from 'mongoose';
 import { Message } from './model/message.schema';
 import * as MessageCache from './func/chat.caching';
 import { UUID } from 'crypto';
+import { UserService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
+    private userService: UserService,
   ) {}
 
   saveMessages(
@@ -27,11 +29,30 @@ export class ChatService {
         .populate({
           path: 'data.author',
           model: 'User',
-          select: ['_id', 'username', 'email', 'avatar', 'createdAt'],
+          select: [
+            '_id',
+            'username',
+            'email',
+            'avatar',
+            'createdAt',
+            'nicknameColor',
+          ],
         })
         .exec()
     ).at(position);
     const cachedMessages = MessageCache.get();
+    const idFoundObject = {};
+    for (let i = 0; i < cachedMessages.length; i++) {
+      const author = cachedMessages[i].author;
+      if (!idFoundObject[author.toString()]) {
+        const userData = await this.userService.findById(author.toString());
+        if (!userData) continue;
+        idFoundObject[userData['_id'].toString()] = userData;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      cachedMessages[i]['author'] = idFoundObject[author.toString()];
+      i++;
+    }
 
     if (!storedMessagesDocument) {
       if (position === 0) {
@@ -55,6 +76,16 @@ export class ChatService {
     return this.messageModel.updateOne(
       { 'data.id': id, 'data.author': userId },
       { $set: { 'data.$.content': newMessage, 'data.$.edited': true } },
+    );
+  }
+
+  deleteMessage(id: UUID, userId: string | Types.ObjectId) {
+    const deleted = MessageCache.del(id, userId);
+    if (deleted) return true;
+
+    return this.messageModel.updateOne(
+      { 'data.id': id, 'data.author': userId },
+      { $pull: { data: { id: id } } },
     );
   }
 }
