@@ -177,6 +177,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // eslint-disable-next-line prefer-const
     for (let c of this.wsClients) {
       if (c == socket) {
+        if (!c['user']) {
+          return { event: 'Unauthorized', data: '' };
+        }
         userData = c['user'];
       }
     }
@@ -219,6 +222,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // eslint-disable-next-line prefer-const
     for (let c of this.wsClients) {
       if (c == socket) {
+        if (!c['user']) {
+          return { event: 'Unauthorized', data: '' };
+        }
         userData = c['user'];
       }
     }
@@ -245,6 +251,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // eslint-disable-next-line prefer-const
     for (let c of this.wsClients) {
       if (c == socket) {
+        if (!c['user']) {
+          return { event: 'Unauthorized', data: '' };
+        }
         userData = c['user'];
       }
     }
