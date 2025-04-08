@@ -5,6 +5,8 @@ const MessagesCacheArray: {
   content: string;
   author: string | Types.ObjectId;
   id: UUID;
+  sentAt: Date | number;
+  edited: boolean;
 }[] = [];
 
 function get() {
@@ -16,6 +18,7 @@ function push(data: {
   author: string | Types.ObjectId;
   id: UUID;
   sentAt: Date | number;
+  edited: boolean;
 }) {
   MessagesCacheArray.push(data);
 }
@@ -28,4 +31,24 @@ function clean() {
   MessagesCacheArray.length = 0;
 }
 
-export { get, push, length, clean };
+function update(id: UUID, newMessage: string, userId: Types.ObjectId | string) {
+  let count = 0;
+  let updated = false;
+  get().forEach((messageElement) => {
+    if (messageElement.id == id && messageElement.author == userId) {
+      const newObject = {
+        id: messageElement.id,
+        author: messageElement.author,
+        content: newMessage,
+        sentAt: messageElement.sentAt,
+        edited: true,
+      };
+      MessagesCacheArray[count] = newObject;
+      updated = true;
+    }
+    count += 1;
+  });
+  return updated;
+}
+
+export { get, push, length, clean, update };

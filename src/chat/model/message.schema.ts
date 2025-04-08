@@ -11,6 +11,7 @@ export class Message {
       content: string;
       author: { type: Types.ObjectId; ref: 'users' };
       sentAt: Date;
+      edited: { type: boolean; default: false };
     },
   ];
 }

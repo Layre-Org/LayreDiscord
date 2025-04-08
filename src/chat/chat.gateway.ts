@@ -18,6 +18,8 @@ import { User } from 'src/users/model/user.schema';
 import { ChatService } from './chat.service';
 import * as MessageCache from './func/chat.caching';
 import { randomUUID } from 'crypto';
+import { UpdateMessageDataDto } from './dto/message-update.dto';
+import { DeleteMessageDataDto } from './dto/message-delete.dto';
 
 @WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -197,12 +199,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       author: userData['_id'],
       id: id,
       sentAt: sentAt,
+      edited: false,
     });
 
     if (MessageCache.length() >= Number(process.env.MESSAGE_DOC_SIZE)) {
       await this.chatService.saveMessages(MessageCache.get());
       MessageCache.clean();
     }
+  }
+
+  @SubscribeMessage('UpdateMessage')
+  async handleUpdate(
+    @MessageBody() data: UpdateMessageDataDto,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    if (!data['id'] || !data['message']) return;
+
+    let userData = {};
+    // eslint-disable-next-line prefer-const
+    for (let c of this.wsClients) {
+      if (c == socket) {
+        userData = c['user'];
+      }
+    }
+    if (!userData) return;
+    if (!userData['_id']) return;
+
+    const response = await this.chatService.editMessage(
+      data.id,
+      data.message,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      userData['_id'],
+    );
+    return typeof response == 'boolean' ? response : response.modifiedCount > 0;
+  }
+
+  @SubscribeMessage('DeleteMessage')
+  handleDelete(@MessageBody() data: DeleteMessageDataDto) {
+    return data;
   }
 
   @SubscribeMessage('test')

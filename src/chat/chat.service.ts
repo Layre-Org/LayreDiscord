@@ -47,4 +47,14 @@ export class ChatService {
       return storedMessagesDocument.data;
     }
   }
+
+  editMessage(id: UUID, newMessage: string, userId: string | Types.ObjectId) {
+    const updated = MessageCache.update(id, newMessage, userId);
+    if (updated) return true;
+
+    return this.messageModel.updateOne(
+      { 'data.id': id, 'data.author': userId },
+      { $set: { 'data.$.content': newMessage, 'data.$.edited': true } },
+    );
+  }
 }
