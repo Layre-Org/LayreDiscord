@@ -45,13 +45,13 @@ export class ChatService {
     for (let i = 0; i < cachedMessages.length; i++) {
       const author = cachedMessages[i].author;
       if (!idFoundObject[author.toString()]) {
+        console.log(author);
         const userData = await this.userService.findById(author.toString());
         if (!userData) continue;
         idFoundObject[userData['_id'].toString()] = userData;
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       cachedMessages[i]['author'] = idFoundObject[author.toString()];
-      i++;
     }
 
     if (!storedMessagesDocument) {
