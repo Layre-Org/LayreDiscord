@@ -9,6 +9,10 @@ export class ChatController {
   async find(@Query('position') position: string | number) {
     position = Number(position) || 0;
 
-    return await this.chatService.getMessages(position);
+    const messages = await this.chatService.getMessages(position);
+
+    return {
+      messages,
+    };
   }
 }

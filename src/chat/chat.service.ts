@@ -26,7 +26,7 @@ export class ChatService {
       await this.messageModel
         .find()
         .sort({ x: 1 })
-        .populate({
+        /*.populate({
           path: 'data.author',
           model: 'User',
           select: [
@@ -37,36 +37,45 @@ export class ChatService {
             'createdAt',
             'nicknameColor',
           ],
-        })
+        })*/
         .exec()
     ).at(position);
     const cachedMessages = MessageCache.get();
-    const idFoundObject = {};
+    /*const idFoundObject = {};
     for (let i = 0; i < cachedMessages.length; i++) {
       const author = cachedMessages[i].author;
       if (!idFoundObject[author.toString()]) {
-        console.log(author);
-        const userData = await this.userService.findById(author.toString());
-        if (!userData) continue;
-        idFoundObject[userData['_id'].toString()] = userData;
+        if (!idFoundObject[author.toString()]['_id']) {
+          console.log(author);
+          const userData = await this.userService.findById(author.toString());
+          if (!userData) continue;
+          idFoundObject[userData['_id'].toString()] = userData;
+        }
       }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       cachedMessages[i]['author'] = idFoundObject[author.toString()];
-    }
+    }*/
+
+    let messages: any[] = [];
 
     if (!storedMessagesDocument) {
       if (position === 0) {
-        return cachedMessages;
+        messages = cachedMessages;
       } else {
-        return [];
+        messages = [];
       }
     }
 
-    if (position === 0) {
-      return [...storedMessagesDocument.data, ...cachedMessages];
-    } else {
-      return storedMessagesDocument.data;
+    if (storedMessagesDocument) {
+      if (position === 0) {
+        messages = [...storedMessagesDocument.data, ...cachedMessages];
+      } else {
+        messages = storedMessagesDocument.data;
+      }
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return messages;
   }
 
   editMessage(id: UUID, newMessage: string, userId: string | Types.ObjectId) {

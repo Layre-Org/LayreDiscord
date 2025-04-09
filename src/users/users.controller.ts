@@ -21,7 +21,7 @@ export class UserController {
 
   @Get(':id')
   async findOne(@Param('id') id: Types.ObjectId | string) {
-    return await this.userService.findById(id);
+    return await this.userService.findById(id).select('-email').select('-__v');
   }
 
   @Post()

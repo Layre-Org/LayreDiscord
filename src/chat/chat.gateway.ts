@@ -237,7 +237,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       userData['_id'],
     );
-    return typeof response == 'boolean' ? response : response.modifiedCount > 0;
+
+    const edited =
+      typeof response == 'boolean' ? response : response.modifiedCount > 0;
+
+    if (edited) {
+      this.broadcast({
+        event: 'MessageUpdated',
+        data: {
+          id: data.id,
+          message: data.message,
+        },
+      });
+    }
   }
 
   @SubscribeMessage('DeleteMessage')
@@ -265,7 +277,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       userData['_id'],
     );
-    return typeof response == 'boolean' ? response : response.modifiedCount > 0;
+
+    const deleted =
+      typeof response == 'boolean' ? response : response.modifiedCount > 0;
+
+    if (deleted) {
+      this.broadcast({
+        event: 'MessageDeleted',
+        data: {
+          id: data.id,
+        },
+      });
+    }
   }
 
   @SubscribeMessage('test')
