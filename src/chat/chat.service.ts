@@ -1,24 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Message } from './model/message.schema';
-import * as MessageCache from './func/chat.caching';
+import { Message, TempMessage } from './model/message.schema';
 import { UUID } from 'crypto';
 import { UserService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatService {
+  private readonly TEMP_DOCUMENT_ID = 'buffer_doc';
+
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
+    @InjectModel(TempMessage.name) private tempMessageModel: Model<TempMessage>,
     private userService: UserService,
   ) {}
 
-  saveMessages(
-    data: { content: string; author: string | Types.ObjectId; id: UUID }[],
-  ) {
-    return this.messageModel.create({
-      data,
+  async onModuleInit() {
+    // Verifica se há mensagens pendentes no buffer ao iniciar
+    const tempDoc = await this.tempMessageModel
+      .findById(this.TEMP_DOCUMENT_ID)
+      .exec();
+    if (
+      tempDoc &&
+      tempDoc.data.length >= Number(process.env.MESSAGE_DOC_SIZE)
+    ) {
+      await this.saveMessages();
+    }
+  }
+
+  async addMessage(message: {
+    content: string;
+    author: string | Types.ObjectId;
+    id: UUID;
+    sentAt: Date | number;
+    edited: boolean;
+  }) {
+    let tempDoc = await this.tempMessageModel
+      .findById(this.TEMP_DOCUMENT_ID)
+      .exec();
+    if (!tempDoc) {
+      tempDoc = await this.tempMessageModel.create({
+        _id: this.TEMP_DOCUMENT_ID,
+        data: [],
+      });
+    }
+
+    await this.tempMessageModel.updateOne(
+      { _id: this.TEMP_DOCUMENT_ID },
+      { $push: { data: message } },
+    );
+
+    const updatedDoc = await this.tempMessageModel
+      .findById(this.TEMP_DOCUMENT_ID)
+      .exec();
+    if (!updatedDoc || !updatedDoc.data.length) return;
+    if (updatedDoc.data.length >= Number(process.env.MESSAGE_DOC_SIZE)) {
+      await this.saveMessages();
+    }
+  }
+
+  private async saveMessages() {
+    const tempDoc = await this.tempMessageModel
+      .findById(this.TEMP_DOCUMENT_ID)
+      .exec();
+    if (!tempDoc || tempDoc.data.length < 1) return;
+
+    await this.messageModel.create({
+      data: tempDoc.data,
     });
+
+    await this.tempMessageModel.updateOne(
+      { _id: this.TEMP_DOCUMENT_ID },
+      { $set: { data: [] } },
+    );
   }
 
   async getMessages(position: number) {
@@ -40,7 +94,9 @@ export class ChatService {
         })*/
         .exec()
     ).at(position);
-    const cachedMessages = MessageCache.get();
+    const cachedMessages = (
+      await this.tempMessageModel.findById(this.TEMP_DOCUMENT_ID)
+    )?.data;
     /*const idFoundObject = {};
     for (let i = 0; i < cachedMessages.length; i++) {
       const author = cachedMessages[i].author;
@@ -60,7 +116,7 @@ export class ChatService {
 
     if (!storedMessagesDocument) {
       if (position === 0) {
-        messages = cachedMessages;
+        messages = cachedMessages || [];
       } else {
         messages = [];
       }
@@ -68,7 +124,7 @@ export class ChatService {
 
     if (storedMessagesDocument) {
       if (position === 0) {
-        messages = [...storedMessagesDocument.data, ...cachedMessages];
+        messages = [...storedMessagesDocument.data, ...(cachedMessages || [])];
       } else {
         messages = storedMessagesDocument.data;
       }
@@ -78,8 +134,16 @@ export class ChatService {
     return messages;
   }
 
-  editMessage(id: UUID, newMessage: string, userId: string | Types.ObjectId) {
-    const updated = MessageCache.update(id, newMessage, userId);
+  async editMessage(
+    id: UUID,
+    newMessage: string,
+    userId: string | Types.ObjectId,
+  ) {
+    const response = await this.tempMessageModel.updateOne(
+      { 'data.id': id, 'data.author': userId },
+      { $set: { 'data.$.content': newMessage, 'data.$.edited': true } },
+    );
+    const updated = response ? response.modifiedCount > 0 : false;
     if (updated) return true;
 
     return this.messageModel.updateOne(
@@ -88,8 +152,12 @@ export class ChatService {
     );
   }
 
-  deleteMessage(id: UUID, userId: string | Types.ObjectId) {
-    const deleted = MessageCache.del(id, userId);
+  async deleteMessage(id: UUID, userId: string | Types.ObjectId) {
+    const response = await this.tempMessageModel.updateOne(
+      { 'data.id': id, 'data.author': userId },
+      { $pull: { data: { id: id } } },
+    );
+    const deleted = response ? response.modifiedCount > 0 : false;
     if (deleted) return true;
 
     return this.messageModel.updateOne(

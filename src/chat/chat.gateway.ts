@@ -16,7 +16,6 @@ import { AuthenticateDto } from './dto/authenticate.dto';
 import { verify } from 'jsonwebtoken';
 import { User } from 'src/users/model/user.schema';
 import { ChatService } from './chat.service';
-import * as MessageCache from './func/chat.caching';
 import { randomUUID } from 'crypto';
 import { UpdateMessageDataDto } from './dto/message-update.dto';
 import { DeleteMessageDataDto } from './dto/message-delete.dto';
@@ -197,18 +196,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     });
 
-    MessageCache.push({
+    await this.chatService.addMessage({
       content: data.message,
       author: userData['_id'],
       id: id,
       sentAt: sentAt,
       edited: false,
     });
-
-    if (MessageCache.length() >= Number(process.env.MESSAGE_DOC_SIZE)) {
-      await this.chatService.saveMessages(MessageCache.get());
-      MessageCache.clean();
-    }
   }
 
   @SubscribeMessage('UpdateMessage')
