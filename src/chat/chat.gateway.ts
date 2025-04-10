@@ -172,6 +172,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     console.log(`Mensagem do usuário: ${data.message}`);
 
+    if (!data.response) {
+      data.response = [];
+    }
+    if (data.response.length > 3) {
+      data.response.splice(3, data.response.length - 3);
+    }
+
     let userData = {};
     // eslint-disable-next-line prefer-const
     for (let c of this.wsClients) {
@@ -193,6 +200,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         message: data.message,
         sentAt: sentAt,
         id: id,
+        response: data.response,
       },
     });
 
@@ -202,6 +210,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       id: id,
       sentAt: sentAt,
       edited: false,
+      response: data.response,
     });
   }
 

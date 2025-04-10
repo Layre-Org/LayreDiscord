@@ -34,6 +34,7 @@ export class ChatService {
     id: UUID;
     sentAt: Date | number;
     edited: boolean;
+    response: string[];
   }) {
     let tempDoc = await this.tempMessageModel
       .findById(this.TEMP_DOCUMENT_ID)
