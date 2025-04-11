@@ -14,21 +14,65 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { UserService } from './users.service';
 import { Types } from 'mongoose';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { ApiBody, ApiHeader, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
 
+  @ApiParam({
+    name: 'id',
+    description: "The users's id",
+    type: String,
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Gets an User',
+    description: 'The route to Get an user based on his ID',
+  })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer {JWT token}',
+    required: true,
+  })
   @Get(':id')
   async findOne(@Param('id') id: Types.ObjectId | string) {
     return await this.userService.findById(id).select('-email').select('-__v');
   }
 
+  @ApiBody({
+    type: CreateUserDto,
+    description: 'Carries the user data for registration',
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Creates an User',
+    description: 'The route to registrate an user',
+  })
   @Post()
   async createUser(@Body() data: CreateUserDto) {
     return await this.userService.create(data);
   }
 
+  @ApiBody({
+    type: UpdateUserDto,
+    description: 'Carries the user data to be updated',
+  })
+  @ApiParam({
+    name: 'id',
+    description: "The user's to be updated id",
+    type: String,
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Updates an User',
+    description: "The route to update an user's data",
+  })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer {JWT token}',
+    required: true,
+  })
   @Patch(':id')
   async updateUser(
     @Param('id') id: Types.ObjectId | string,
@@ -77,6 +121,21 @@ export class UserController {
     };
   }
 
+  @ApiParam({
+    name: 'id',
+    description: "The user's to be deleted id",
+    type: String,
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Deletes an User',
+    description: "The route to delete an user's data",
+  })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer {JWT token}',
+    required: true,
+  })
   @Delete(':id')
   async deleteUser(
     @Param('id') id: Types.ObjectId | string,
