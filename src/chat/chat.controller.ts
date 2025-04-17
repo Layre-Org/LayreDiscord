@@ -11,7 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { ApiHeader, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiBody, ApiHeader, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileSizeValidationPipe } from './validation/file.size.validation';
 
@@ -46,6 +46,18 @@ export class ChatController {
     };
   }
 
+  @ApiBody({
+    description: 'Requires a Form Data with file data',
+  })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer {JWT token}',
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Uploads a file',
+    description: "Uploads a file and return it's link for download/appearence",
+  })
   @Post('upload/file')
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(

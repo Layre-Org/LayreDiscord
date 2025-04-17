@@ -30,6 +30,7 @@ export class AppModule implements NestModule {
         { path: 'users', method: RequestMethod.GET },
         'users/:id',
         'chat',
+        'chat/upload/file',
       );
   }
 }
