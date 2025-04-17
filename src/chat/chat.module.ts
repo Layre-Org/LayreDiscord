@@ -10,6 +10,7 @@ import {
   TempMessageSchema,
 } from './model/message.schema';
 import { ChatController } from './chat.controller';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ChatController } from './chat.controller';
       { name: Message.name, schema: MessageSchema },
       { name: TempMessage.name, schema: TempMessageSchema },
     ]),
+    MulterModule.register(),
   ],
   providers: [ChatGateway, ChatService],
   controllers: [ChatController],

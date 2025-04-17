@@ -211,6 +211,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       sentAt: sentAt,
       edited: false,
       response: data.response,
+      attachments: data.attachments || [],
     });
   }
 

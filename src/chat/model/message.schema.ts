@@ -13,7 +13,8 @@ export class Message {
       author: { type: Types.ObjectId; ref: 'users' };
       sentAt: Date;
       edited: { type: boolean; default: false };
-      response: string[];
+      response: { type: string[]; default: [] };
+      attachments: { type: string[]; default: [] };
     },
   ];
 }
@@ -30,7 +31,8 @@ export class TempMessage {
       author: { type: Types.ObjectId; ref: 'users' };
       sentAt: Date;
       edited: { type: boolean; default: false };
-      response: string[];
+      response: { type: string[]; default: [] };
+      attachments: { type: string[]; default: [] };
     },
   ];
 }

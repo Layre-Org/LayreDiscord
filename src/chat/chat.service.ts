@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message, TempMessage } from './model/message.schema';
 import { UUID } from 'crypto';
 import { UserService } from 'src/users/users.service';
+import axios from 'axios';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import FormData = require('form-data');
 
 @Injectable()
 export class ChatService {
@@ -35,6 +39,7 @@ export class ChatService {
     sentAt: Date | number;
     edited: boolean;
     response: string[];
+    attachments: string[];
   }) {
     let tempDoc = await this.tempMessageModel
       .findById(this.TEMP_DOCUMENT_ID)
@@ -165,5 +170,32 @@ export class ChatService {
       { 'data.id': id, 'data.author': userId },
       { $pull: { data: { id: id } } },
     );
+  }
+
+  async uploadFile(fileBuffer: Buffer | string, fileName: string) {
+    const formData = new FormData();
+    formData.append('content', fileName);
+    formData.append('file', Buffer.from(fileBuffer), {
+      filename: fileName,
+    });
+
+    const response = await axios.post(
+      <string>process.env.WEBHOOK_URL,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      },
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const attachment = response.data.attachments[0];
+
+    if (!attachment) {
+      throw new BadRequestException("Fail on obtaining the file's URL");
+    }
+
+    return attachment;
   }
 }

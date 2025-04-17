@@ -1,6 +1,19 @@
-import { Controller, Get, Query } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { ApiHeader, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { FileSizeValidationPipe } from './validation/file.size.validation';
 
 @Controller('chat')
 export class ChatController {
@@ -31,5 +44,26 @@ export class ChatController {
     return {
       messages,
     };
+  }
+
+  @Post('upload/file')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @UploadedFile(new FileSizeValidationPipe()) file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file or more than 8mb sent');
+    }
+
+    const imageBuffer = file.buffer;
+    const imageName = file.originalname;
+
+    const response = await this.chatService.uploadFile(imageBuffer, imageName);
+
+    if (!response || !response['url']) {
+      throw new BadRequestException('Error on getting the file URL');
+    }
+
+    return { fileUrl: response['url'] };
   }
 }
