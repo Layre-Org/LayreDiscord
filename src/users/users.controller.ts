@@ -37,7 +37,7 @@ export class UserController {
   })
   @Get(':id')
   async findOne(@Param('id') id: Types.ObjectId | string) {
-    return await this.userService.findById(id).select('-email').select('-__v');
+    return await this.userService.findById(id).select('-__v');
   }
 
   @ApiBody({
@@ -88,6 +88,14 @@ export class UserController {
 
       if (emailDocs) {
         throw new BadRequestException('This email already exists');
+      }
+    }
+
+    if (body.username) {
+      const usernameDocs = await this.userService.findByUsername(body.username);
+
+      if (usernameDocs) {
+        throw new BadRequestException('This username already exists');
       }
     }
 

@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsHexColor,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
@@ -10,7 +11,8 @@ import {
 
 export class CreateUserDto {
   @IsString()
-  @Length(3, 24)
+  @Length(3, 16)
+  @IsNotEmpty()
   @ApiProperty({
     name: 'username',
     minLength: 3,
@@ -21,7 +23,13 @@ export class CreateUserDto {
   username: string;
 
   @IsString()
+  @IsOptional()
+  @Length(1, 32)
+  displayName: string;
+
+  @IsString()
   @Length(8, 32)
+  @IsNotEmpty()
   @ApiProperty({
     name: 'password',
     minLength: 8,
@@ -33,6 +41,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsEmail()
+  @IsNotEmpty()
   @ApiProperty({
     name: 'email',
     format: 'example@email.com',
@@ -61,4 +70,14 @@ export class CreateUserDto {
     example: '#ffffff',
   })
   nicknameColor: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    name: 'banner',
+    format: 'type/data',
+    type: 'string',
+    example: 'color/#ffffff',
+  })
+  banner: string;
 }

@@ -5,8 +5,11 @@ export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   username: string;
+
+  @Prop({ required: false })
+  displayName: string;
 
   @Prop({ required: true, select: false })
   password: string;
@@ -25,6 +28,9 @@ export class User {
 
   @Prop({ default: '#ffffff' })
   nicknameColor: string;
+
+  @Prop({ default: 'color/#ffffff' })
+  banner: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

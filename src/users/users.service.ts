@@ -28,6 +28,10 @@ export class UserService {
     return this.userModel.findOne({ email });
   }
 
+  findByUsername(username: string) {
+    return this.userModel.findOne({ username });
+  }
+
   async create(body: CreateUserDto) {
     try {
       const user: { password?: string } = (
@@ -39,8 +43,9 @@ export class UserService {
     } catch (err) {
       switch (err.code) {
         case 11000:
+          console.log(err);
           throw new HttpException(
-            'This email already exists.',
+            `This ${Object.keys(err.keyPattern as Record<string, unknown>)[0]} already exists.`,
             HttpStatus.BAD_REQUEST,
           );
           break;
